@@ -14,6 +14,6 @@ class Alias(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     created_at = Column(DateTime, default=lambda: datetime.utcnow())
     value = Column(String)
-    alias_generator = Column(Enum(AliasGeneratorType))
+    alias_generator = Column(Enum(AliasGeneratorType, create_constraint=False))
     public_alias = Column(String)
     expires_at = Column(DateTime)

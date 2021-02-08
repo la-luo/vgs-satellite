@@ -2,7 +2,7 @@ import random
 import re
 import uuid
 from abc import ABC, abstractmethod
-from typing import List, Type
+from typing import Iterable, List, Set, Type
 
 from base58 import b58encode
 
@@ -59,15 +59,7 @@ class LuhnValidCardNumber(ValidatingAliasGenerator):
             fixed_indexes.update(range(start, stop))
         loose_indexes = set(range(card_len)) - fixed_indexes
 
-        space = set(range(10))
-        digits = [
-            (
-                random.choice(list(space.difference({d})))
-                if i in loose_indexes
-                else int(d)
-            )
-            for i, d in enumerate(value)
-        ]
+        digits = _random_digits(map(int, value), loose_indexes)
 
         m = _mod10(digits)
         if m != 0:
@@ -122,6 +114,14 @@ class LuhnInvalidCardNumber(ValidatingAliasGenerator):
         return ''.join(map(str, digits))
 
 
+class NumLenPreserving(ValidatingAliasGenerator):
+    accepted_format: re.Pattern = re.compile(r'\d{3,}')
+    fallback_generator_cls: Type[AliasGenerator] = RawUUID
+
+    def _generate(self, value: str) -> str:
+        return ''.join(map(str, _random_digits(map(int, value))))
+
+
 def get_alias_generator(generator_type: AliasGeneratorType) -> AliasGenerator:
     return _supported_generators[generator_type]
 
@@ -130,6 +130,7 @@ _supported_generators = {
     AliasGeneratorType.FPE_SIX_T_FOUR: LuhnValidCardNumber6T4(),
     AliasGeneratorType.FPE_T_FOUR: LuhnValidCardNumberT4(),
     AliasGeneratorType.NON_LUHN_FPE_ALPHANUMERIC: LuhnInvalidCardNumber(),
+    AliasGeneratorType.NUM_LENGTH_PRESERVING: NumLenPreserving(),
     AliasGeneratorType.PFPT: LuhnValidCardNumberPFPT(),
     AliasGeneratorType.RAW_UUID: RawUUID(),
     AliasGeneratorType.UUID: UUID(),
@@ -144,6 +145,24 @@ def _mod10(digits: List[int]) -> int:
         LUHN_DIGITS[d] if i % 2 else d
         for i, d in enumerate(digits[::-1])
     ) % 10
+
+
+def _random_digits(
+    digits: Iterable[int],
+    loose_indexes: Set[int] = None,
+) -> List[int]:
+    result = []
+    for i, d in enumerate(digits):
+        if not loose_indexes or i in loose_indexes:
+            v = random.randint(0, 9)
+            if v == d:
+                v = (d + 1) % 10
+        else:
+            v = d
+
+        result.append(v)
+
+    return result
 
 
 def check_luhn(card_number: str) -> bool:

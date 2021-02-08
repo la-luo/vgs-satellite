@@ -3,10 +3,10 @@ export const ruleTokenGenerators = [
     value: 'UUID',
     title: 'Generic - VGS Alias (Default)',
   },
-  // {
-  //   value: 'NUM_LENGTH_PRESERVING',
-  //   title: 'Generic - Numeric Length Preserving',
-  // },
+  {
+    value: 'NUM_LENGTH_PRESERVING',
+    title: 'Generic - Numeric Length Preserving',
+  },
   {
     value: 'FPE_SIX_T_FOUR',
     title: 'Payment Card - Format Preserving, Luhn Valid (6T4)',
